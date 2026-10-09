@@ -30,6 +30,7 @@ const nodeDefinitions = [
   { id: 'radnja-9', name: 'Radnja 9', parentId: 'crveni-krst' },
 ];
 
+/** Upsert the organization hierarchy and repeatable development demo accounts. */
 async function seed() {
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/grocery_store';
   const managerPassword = process.env.SEED_MANAGER_PASSWORD || 'ChangeMe123!';
@@ -100,10 +101,12 @@ async function seed() {
 }
 
 seed()
+  // Report initialization errors and ensure the database connection is closed.
   .catch((error) => {
     console.error('Database initialization failed:', error);
     process.exitCode = 1;
   })
+  // Close MongoDB after either a successful seed or a reported failure.
   .finally(async () => {
     await mongoose.disconnect();
   });

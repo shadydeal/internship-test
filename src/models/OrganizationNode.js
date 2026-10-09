@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+/** Define organization nodes using parent links and a materialized ancestor path. */
 const organizationNodeSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },

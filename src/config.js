@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+/** Load and validate the environment-backed settings required by the API. */
 function getConfig() {
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret || jwtSecret.length < 32) {

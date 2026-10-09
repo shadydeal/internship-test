@@ -4,9 +4,11 @@ const bcrypt = require('bcryptjs');
 const { Employee, Manager } = require('../models/person');
 const { HttpError } = require('../errors/HttpError');
 
+/** Create the public authentication router and its credential login endpoint. */
 function createAuthRouter({ jwtSecret, jwtExpiresIn }) {
   const router = express.Router();
 
+  /** Verify credentials and return a signed token plus non-sensitive account data. */
   router.post('/login', async (req, res, next) => {
     try {
       const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';

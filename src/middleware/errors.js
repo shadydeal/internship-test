@@ -1,9 +1,11 @@
 const { HttpError } = require('../errors/HttpError');
 
+/** Forward a consistent 404 error for requests that match no route. */
 function notFound(_req, _res, next) {
   next(new HttpError(404, 'Route not found.'));
 }
 
+/** Translate known failures to safe HTTP responses and log unexpected errors. */
 function errorHandler(error, _req, res, _next) {
   if (error instanceof HttpError) {
     return res.status(error.status).json({ error: error.message });

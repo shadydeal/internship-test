@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+/** Define the shared employee/manager account schema and safe JSON serialization. */
 const personSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, minlength: 1, maxlength: 120 },
@@ -13,6 +14,7 @@ const personSchema = new mongoose.Schema(
 personSchema.index({ email: 1 }, { unique: true });
 personSchema.index({ nodeId: 1 });
 personSchema.set('toJSON', {
+  /** Remove stored password hashes whenever an account is serialized. */
   transform(_document, result) {
     delete result.passwordHash;
     return result;
@@ -21,6 +23,7 @@ personSchema.set('toJSON', {
 
 const Person = mongoose.models.Person || mongoose.model('Person', personSchema, 'people');
 
+/** Return an existing role discriminator or register it on the people collection. */
 function getRoleModel(name, value) {
   return (
     Person.discriminators?.[name] ||

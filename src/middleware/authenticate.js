@@ -2,7 +2,9 @@ const jwt = require('jsonwebtoken');
 const { Employee, Manager } = require('../models/person');
 const { HttpError } = require('../errors/HttpError');
 
+/** Create middleware that verifies a JWT and reloads its active account from MongoDB. */
 function authenticate({ jwtSecret }) {
+  /** Attach the authenticated account to the request or forward an HTTP error. */
   return async (req, _res, next) => {
     try {
       const authorization = req.get('authorization') || '';

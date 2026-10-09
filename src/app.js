@@ -7,6 +7,7 @@ const { errorHandler, notFound } = require('./middleware/errors');
 const { createPeopleRouter } = require('./routes/people');
 const { createAuthRouter } = require('./routes/auth');
 
+/** Build the Express application, mounting public, authenticated, and error routes. */
 function createApp({
   jwtSecret = getConfig().jwtSecret,
   jwtExpiresIn = process.env.JWT_EXPIRES_IN || '1h',
@@ -17,6 +18,7 @@ function createApp({
   app.use(helmet());
   app.use(express.json({ limit: '32kb' }));
 
+  // Expose a lightweight liveness check without requiring a token.
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
   app.use(
     '/api/auth',

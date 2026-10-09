@@ -8,11 +8,13 @@ const { HttpError } = require('../errors/HttpError');
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 10;
 
+/** Build CRUD and node-scoped listing routes for one account type. */
 function createPeopleRouter({ entityType }) {
   const router = express.Router();
   const Model = entityType === 'manager' ? Manager : Employee;
   const label = entityType === 'manager' ? 'manager' : 'employee';
 
+  /** Load a requested node and enforce the caller's role and subtree access. */
   async function requireNodeAccess(actor, nodeId, action) {
     if (typeof nodeId !== 'string' || nodeId.length === 0) {
       throw new HttpError(400, 'nodeId is required.');
@@ -25,6 +27,7 @@ function createPeopleRouter({ entityType }) {
     return node;
   }
 
+  /** Load an account's node and conceal records outside the caller's allowed scope. */
   async function requireRecordAccess(actor, person, action) {
     if (!person) throw new HttpError(404, `${label} not found.`);
     const node = await OrganizationNode.findById(person.nodeId).select('_id ancestors');
@@ -34,16 +37,23 @@ function createPeopleRouter({ entityType }) {
     return person;
   }
 
+  /** Reject account mutations by anyone who is not a manager. */
   function ensureCanManage(actor) {
     if (!canManageEntity(actor)) throw new HttpError(403, 'Only managers can manage accounts.');
   }
 
+  /** Validate and normalize writable account fields for creation or partial updates. */
   function validatePersonInput(body, { partial = false } = {}) {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       throw new HttpError(400, 'A JSON object is required.');
     }
     const allowed = new Set(['name', 'email', 'password', 'nodeId']);
-    if (Object.keys(body).some((key) => !allowed.has(key))) {
+    if (
+      Object.keys(body).some(
+        // Reject extra fields rather than silently accepting or persisting them.
+        (key) => !allowed.has(key),
+      )
+    ) {
       throw new HttpError(400, 'The request contains unsupported fields.');
     }
 
@@ -75,6 +85,7 @@ function createPeopleRouter({ entityType }) {
     return result;
   }
 
+  /** List accounts at an accessible node, optionally including every descendant. */
   router.get('/', async (req, res, next) => {
     try {
       const node = await requireNodeAccess(req.user, req.query.nodeId, 'read');
@@ -89,6 +100,7 @@ function createPeopleRouter({ entityType }) {
     }
   });
 
+  /** Create an account after validating the payload and target-node permissions. */
   router.post('/', async (req, res, next) => {
     try {
       ensureCanManage(req.user);
@@ -106,6 +118,7 @@ function createPeopleRouter({ entityType }) {
     }
   });
 
+  /** Return one account only when it is visible to the authenticated caller. */
   router.get('/:id', async (req, res, next) => {
     try {
       const person = await Model.findById(req.params.id);
@@ -116,6 +129,7 @@ function createPeopleRouter({ entityType }) {
     }
   });
 
+  /** Update an in-scope account, hashing replacement passwords before saving. */
   router.patch('/:id', async (req, res, next) => {
     try {
       ensureCanManage(req.user);
@@ -136,6 +150,7 @@ function createPeopleRouter({ entityType }) {
     }
   });
 
+  /** Delete an in-scope account after verifying the caller is a manager. */
   router.delete('/:id', async (req, res, next) => {
     try {
       ensureCanManage(req.user);
